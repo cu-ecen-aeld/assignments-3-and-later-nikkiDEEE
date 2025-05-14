@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "../../examples/autotest-validate/autotest-validate.h"
 #include "../../assignment-autotest/test/assignment1/username-from-conf-file.h"
+#include "../../assignment-autotest/examples/autotest-validate/autotest-validate.h"
 
 /**
 * This function should:
@@ -18,5 +19,5 @@ void test_validate_my_username()
      * TODO: Replace the line below with your code here as described above to verify your /conf/username.txt 
      * config file and my_username() functions are setup properly
      */
-    TEST_ASSERT_TRUE_MESSAGE(false,"AESD students, please fix me!");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE("nikkiDEEE", my_username(), "The username from the conf file does not match the hard coded username");
 }
