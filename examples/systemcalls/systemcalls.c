@@ -1,4 +1,7 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,7 +19,11 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
-
+    int result = system(cmd);
+    if (result == -1) {
+        // system call failed
+        return false;
+    }
     return true;
 }
 
@@ -47,7 +54,22 @@ bool do_exec(int count, ...)
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
-    command[count] = command[count];
+    // command[count] = command[count];
+
+    pid_t child = fork();
+    if (child == -1) {
+        // fork failed
+        va_end(args);
+        return false;
+    }
+    if (child == 0) {
+        // In child process
+        execv(command[0], command);
+        // If execv returns, it must have failed
+        perror("execv failed");
+        exit(EXIT_FAILURE); // Exit child process with failure
+    }
+
 
 /*
  * TODO:
@@ -82,9 +104,35 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
-    command[count] = command[count];
+    // command[count] = command[count];
 
-
+    pid_t child = fork();
+    if (child == -1) {
+        // fork failed
+        va_end(args);
+        return false;
+    }
+    if (child == 0) {
+        // In child process
+        // Open the output file for writing
+        FILE *outputfile = fopen(outputfile, "w");
+        if (outputfile == NULL) {
+            perror("Failed to open output file");
+            exit(EXIT_FAILURE); // Exit child process with failure
+        }
+        // Redirect standard output to the output file
+        if (dup2(fileno(outputfile), STDOUT_FILENO) == -1) {
+            perror("Failed to redirect stdout");
+            fclose(outputfile);
+            exit(EXIT_FAILURE); // Exit child process with failure
+        }
+        fclose(outputfile); // Close the file descriptor after redirecting
+        execv(command[0], command);
+        // If execv returns, it must have failed
+        perror("execv failed");
+        exit(EXIT_FAILURE); // Exit child process with failure
+    }
+    
 /*
  * TODO
  *   Call execv, but first using https://stackoverflow.com/a/13784315/1446624 as a refernce,
