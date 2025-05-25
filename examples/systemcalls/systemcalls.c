@@ -56,6 +56,16 @@ bool do_exec(int count, ...)
     // and may be removed
     // command[count] = command[count];
 
+    /*
+    * TODO:
+    *   Execute a system command by calling fork, execv(),
+    *   and wait instead of system (see LSP page 161).
+    *   Use the command[0] as the full path to the command to execute
+    *   (first argument to execv), and use the remaining arguments
+    *   as second argument to the execv() command.
+    *
+    */
+    
     pid_t child = fork();
     if (child == -1) {
         // fork failed
@@ -69,21 +79,16 @@ bool do_exec(int count, ...)
         perror("execv failed");
         exit(EXIT_FAILURE); // Exit child process with failure
     }
-
-
-/*
- * TODO:
- *   Execute a system command by calling fork, execv(),
- *   and wait instead of system (see LSP page 161).
- *   Use the command[0] as the full path to the command to execute
- *   (first argument to execv), and use the remaining arguments
- *   as second argument to the execv() command.
- *
-*/
+    // In parent process: wait for child to finish
+    int status;
+    if (waitpid(child, &status, 0) == -1) {
+        perror("waitpid failed");
+        va_end(args);
+        return false;
+    }
 
     va_end(args);
-
-    return true;
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
 
 /**
